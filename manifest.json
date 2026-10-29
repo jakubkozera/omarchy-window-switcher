@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "jakubkozera.window-switcher",
+  "name": "Window Switcher",
+  "version": "1.0.0",
+  "author": "Jakub Kozera",
+  "license": "MIT",
+  "description": "Alt+Tab window switcher with live previews and filtering, plus minimize-to-bar",
+  "kinds": [
+    "overlay",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "Switcher.qml",
+    "barWidget": "Minimized.qml"
+  },
+  "barWidget": {
+    "displayName": "Minimized windows",
+    "description": "Icons of minimized windows; click one to restore it",
+    "category": "Compositor",
+    "allowMultiple": false,
+    "defaultSection": "left"
+  }
+}
