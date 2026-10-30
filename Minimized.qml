@@ -1,8 +1,10 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "Model.js" as Model
 
@@ -27,6 +29,14 @@ BarWidget {
 
   function refresh() {
     if (!snapshotProc.running) snapshotProc.running = true
+  }
+
+  function toplevelFor(address) {
+    var wanted = String(address).replace(/^0x/, "")
+    var values = Hyprland.toplevels.values
+    for (var i = 0; i < values.length; i++)
+      if (values[i].address === wanted) return values[i].wayland
+    return null
   }
 
   Component.onCompleted: refresh()
@@ -96,12 +106,82 @@ BarWidget {
           hoverEnabled: true
           acceptedButtons: Qt.LeftButton | Qt.MiddleButton
           cursorShape: Qt.PointingHandCursor
-          onEntered: if (root.bar) root.bar.showTooltip(slot, slot.modelData.title || slot.modelData.cls)
-          onExited: if (root.bar) root.bar.hideTooltip(slot)
+          onEntered: {
+            console.log("switcher-preview: entered", slot.modelData.title)
+            hoverDelay.restart()
+          }
+          onExited: {
+            hoverDelay.stop()
+            previewPopup.open = false
+          }
           onClicked: function(event) {
-            if (root.bar) root.bar.hideTooltip(slot)
+            hoverDelay.stop()
+            previewPopup.open = false
             if (event.button === Qt.MiddleButton) Quickshell.execDetached(Model.closeCommand(slot.modelData))
             else root.restore(slot.modelData)
+          }
+        }
+
+        Timer {
+          id: hoverDelay
+          interval: 400
+          onTriggered: {
+            console.log("switcher-preview: timer", slot.modelData.title)
+            Hyprland.refreshToplevels()
+            previewPopup.open = true
+          }
+        }
+
+        PopupCard {
+          id: previewPopup
+          anchorItem: slot
+          bar: root.bar
+          triggerMode: "hover"
+          open: false
+          contentWidth: fittedContentWidth(Style.space(260))
+          contentHeight: fittedContentHeight(previewContent.implicitHeight)
+
+          Column {
+            id: previewContent
+            width: parent.width
+            spacing: Style.space(8)
+
+            Rectangle {
+              width: parent.width
+              height: Style.space(140)
+              radius: Style.cornerRadius
+              color: Util.alpha(Commons.Color.popups.text, 0.08)
+              clip: true
+
+              ScreencopyView {
+                id: capture
+                captureSource: previewPopup.open ? root.toplevelFor(slot.modelData.address) : null
+                live: true
+                anchors.centerIn: parent
+                readonly property real aspect: sourceSize.height > 0 ? sourceSize.width / sourceSize.height : 1
+                width: Math.min(parent.width, parent.height * aspect)
+                height: width / Math.max(aspect, 0.01)
+                visible: hasContent
+              }
+
+              WindowIcon {
+                anchors.centerIn: parent
+                width: Style.space(48)
+                height: width
+                appClass: slot.modelData.cls
+                visible: !capture.hasContent
+              }
+            }
+
+            Text {
+              width: parent.width
+              textFormat: Text.PlainText
+              text: slot.modelData.title || slot.modelData.cls
+              color: Commons.Color.popups.text
+              font.family: Style.font.menuFamily
+              font.pixelSize: Style.font.body
+              elide: Text.ElideRight
+            }
           }
         }
       }

@@ -25,7 +25,8 @@ An [Omarchy](https://omarchy.org/) plugin that adds a Windows-style
 - **Focus mode**: `Super+Home` minimizes every other window on the focused
   window's workspace, leaving only the focused one. Bring them back from the
   bar widget, the switcher, or `Super+Page Up` (one at a time).
-- **Bar widget** (`Minimized windows`): one icon per minimized window. Left
+- **Bar widget** (`Minimized windows`): one icon per minimized window. Hover
+  for its title and preview (or app icon when a preview is unavailable). Left
   click restores it, middle click closes it. Hidden when nothing is minimized.
   Minimized windows also appear in the switcher (dimmed) and are restored when
   selected.
